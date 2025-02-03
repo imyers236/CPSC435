@@ -1,0 +1,8 @@
+Process 0: my ID is 1363104; the smallest process ID 413202 is the one from Process 4
+Process 1: my ID is 1363105; the smallest process ID 413202 is the one from Process 4
+Process 2: my ID is 1363106; the smallest process ID 413202 is the one from Process 4
+Process 3: my ID is 1363108; the smallest process ID 413202 is the one from Process 4
+Process 4: my ID is 413202; the smallest process ID 413202 is the one from Process 4
+Process 5: my ID is 413203; the smallest process ID 413202 is the one from Process 4
+Process 6: my ID is 413204; the smallest process ID 413202 is the one from Process 4
+Process 7: my ID is 413205; the smallest process ID 413202 is the one from Process 4

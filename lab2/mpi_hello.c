@@ -1,4 +1,5 @@
 /*
+* Ian Myers
 * MPI Example - Hello world
 */
 #include <stdio.h>
