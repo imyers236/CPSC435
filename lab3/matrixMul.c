@@ -35,6 +35,7 @@ int main(int argc, char *argv[])
     n = atoi(argv[1]); // get matrix dimension from command line
     rowsperprocess = n / (size - 1);
     extraRows = n - rowsperprocess * (size -1);
+    // adds extra rows to final process
     if(rank == size-1){
         rowsperprocess += extraRows;
     }
@@ -55,24 +56,31 @@ int main(int argc, char *argv[])
         t = MPI_Wtime(); //start timer
         for(i=1; i<size; i++) // send marix B and chunk of A to each slave
         {
-            MPI_Send(&matA[(rank -1) * rowsperprocess], n, MPI_DOUBLE, i, 1, MPI_COMM_WORLD);
-            MPI_Send(matB, n*n, MPI_DOUBLE, i, 2, MPI_COMM_WORLD);
+            // checks if it is sending to final process and if so add more to size
+            if(i == size-1){
+                MPI_Send(matA + (i -1) * rowsperprocess * n, (rowsperprocess + extraRows) * n, MPI_DOUBLE, i, TAG_INITA, MPI_COMM_WORLD);
+            }
+            else
+            {
+                MPI_Send(matA + (i -1) * rowsperprocess * n, rowsperprocess * n, MPI_DOUBLE, i, TAG_INITA, MPI_COMM_WORLD);
+            }
+            MPI_Send(matB, n*n, MPI_DOUBLE, i, TAG_INITB, MPI_COMM_WORLD);
         }
     }
     else //slaves: allocate memory for matrix A and C, and receive matrix B and A
     {
-        matA = (double *)calloc(n*n, sizeof(double)); /* allocate memory for
+        matA = (double *)calloc(rowsperprocess * n, sizeof(double)); /* allocate memory for
         matA */
-        matC = (double *)calloc(n*n, sizeof(double)); /* allocate memory for
+        matC = (double *)calloc(rowsperprocess * n, sizeof(double)); /* allocate memory for
         matC */
-        MPI_Recv(&matA, n, MPI_DOUBLE, 0, 1, MPI_COMM_WORLD, &status);
-        MPI_Recv(matB, n*n, MPI_DOUBLE, 0, 2, MPI_COMM_WORLD, &status);
+        MPI_Recv(matA, rowsperprocess * n, MPI_DOUBLE, 0, TAG_INITA, MPI_COMM_WORLD, &status);
+        MPI_Recv(matB, n*n, MPI_DOUBLE, 0, TAG_INITB, MPI_COMM_WORLD, &status);
 
     }
     if(rank >0) // slaves: do computation and send results to master
     {
         // each slave does the multiplication of received portion
-        for(i=(rank -1) * rowsperprocess; i< rank * rowsperprocess; i++)
+        for(i=0; i< rowsperprocess; i++)
         {
             for(j=0; j<n; j++)
             {
@@ -81,14 +89,19 @@ int main(int argc, char *argv[])
                     matC[i*n + j] += matA[i*n + k]*matB[k*n + j];
                 }
             }
-        }    
-        MPI_Send(matC, n*n, MPI_DOUBLE, 0, 3, MPI_COMM_WORLD);         
+        }  
+        MPI_Send(matC, rowsperprocess * n, MPI_DOUBLE, 0, TAG_RESULT, MPI_COMM_WORLD);         
     }
     else // master receive result, record time and print out results if n<16
     {
-        for(i=1; i<size; i++) // send marix B and chunk of A to each slave
+        for(i=1; i<size; i++)
         {
-            MPI_Recv(matC, n*n, MPI_DOUBLE, i, 0, MPI_COMM_WORLD, &status);
+            if(i == size-1){
+                MPI_Recv(matC + (i -1) * rowsperprocess * n, (rowsperprocess + extraRows) * n, MPI_DOUBLE, i, TAG_RESULT, MPI_COMM_WORLD, &status);
+            }
+            else{
+                MPI_Recv(matC + (i -1) * rowsperprocess * n, rowsperprocess * n, MPI_DOUBLE, i, TAG_RESULT, MPI_COMM_WORLD, &status);
+            }
         }
         // Stop timer, including communication time
         t = MPI_Wtime() - t;
