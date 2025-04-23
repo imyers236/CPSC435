@@ -1,0 +1,11 @@
+bye     1
+bye:hello       1
+bye:world       1
+goodbye 1
+goodbye:hadoop  1
+goodbye:hello   1
+hadoop  1
+hadoop:hello    1
+hello   2
+hello:world     1
+world   1
